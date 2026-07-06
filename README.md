@@ -13,18 +13,6 @@ MongoDB
 Mongoose (ORM)
 dotenv
 
-Project Structure
-
-CRUD-Application/
-├── server/
-│   ├── models/
-│   │   └── userModel.js
-│   ├── controllers/
-│   │   └── userController.js
-│   ├── routes/
-│   │   └── userRoute.js
-│   ├── .env
-│   └── index.js
 
 API Endpoints
 
