@@ -1,5 +1,5 @@
 import express from "express"
-import upload from "../middleware/upload.js"; 
+import upload from "../MiddleWare/upload.js"; 
 
 import { create, deleteUser, getAllUsers, getUserById, update, searchUsers, filterUsers, uploadPhoto, deletePhoto } from "../Controller/userController.js"
 
