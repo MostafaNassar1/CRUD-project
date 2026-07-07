@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import User from "../model/userModel.js"
-
+import fs from "fs";
 
 export const create = async(req, res) => {
     try {
@@ -147,3 +147,77 @@ export const filterUsers = async(req, res) => {
          res.status(500).json({errorMessge:error.message})
     }
 }
+
+
+// upload photo
+export const uploadPhoto = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const userExist = await User.findById(id);
+        if (!userExist) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        // delete old photo if exists
+        if (userExist.photo) {
+            const oldPath = userExist.photo.replace(`${process.env.BASE_URL}/`, "");
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+
+        // build photo URL
+        const photoUrl = `${process.env.BASE_URL}/uploads/photos/${req.file.filename}`;
+
+        // update user with new photo URL
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            { photo: photoUrl },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: "Photo uploaded successfully",
+            photo: photoUrl,
+            user: updatedUser
+        });
+
+    } catch (error) {
+        res.status(500).json({ errorMessage: error.message });
+    }
+};
+
+// delete photo
+export const deletePhoto = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const userExist = await User.findById(id);
+        if (!userExist) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!userExist.photo) {
+            return res.status(404).json({ message: "No photo found for this user" });
+        }
+
+        // delete file from storage
+        const filePath = userExist.photo.replace(`${process.env.BASE_URL}/`, "");
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        // clear photo field in DB
+        await User.findByIdAndUpdate(id, { photo: null });
+
+        res.status(200).json({ message: "Photo deleted successfully" });
+
+    } catch (error) {
+        res.status(500).json({ errorMessage: error.message });
+    }
+};

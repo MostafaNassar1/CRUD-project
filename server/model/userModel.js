@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema({
     address:{
         type:String,
         required:true
-    }
+    },
+    photo:{
+        type: String,
+        default: null }
 })
 
 export default mongoose.model("Users", userSchema)

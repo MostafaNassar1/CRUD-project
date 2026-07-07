@@ -8,6 +8,9 @@ const app = express();
 app.use(bodyParser.json());
 dotenv.config();
 
+//serve static files with cache control
+app.use("/uploads", express.static("uploads"));
+
 const PORT = process.env.PORT || 7000;
 const MONGOURL = process.env.MONGO_URL;
 
