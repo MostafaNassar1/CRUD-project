@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
         required:true
     },
     photo:{
-        type: String,
-        default: null }
+        type: [String],
+        default: [] }
 })
 
 export default mongoose.model("Users", userSchema)

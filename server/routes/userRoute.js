@@ -13,7 +13,10 @@ route.get("/users", getAllUsers)
 route.get("/user/:id", getUserById);
 route.put("/update/user/:id", update);
 route.delete("/delete/user/:id", deleteUser)
-route.post("/user/:id/photo",     upload.single("photo"), uploadPhoto);   
+route.post("/user/:id/photo",     upload.array("photos", 5), uploadPhoto);   
 route.delete("/user/:id/photo",   deletePhoto); 
+route.get("" ,(req, res) => {
+    res.json({message: "Server is healthy and managed by Mostafa", status:200});
+})
 
 export default route;

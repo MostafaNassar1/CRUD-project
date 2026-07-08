@@ -159,31 +159,33 @@ export const uploadPhoto = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!req.file) {
+        if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
         // delete old photo if exists
-        if (userExist.photo) {
-            const oldPath = userExist.photo.replace(`${process.env.BASE_URL}/`, "");
-            if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
-            }
+        if (userExist.photo && Array.isArray(userExist.photo)) {
+            userExist.photo.forEach(photoUrl => {
+                const oldPath = photoUrl.replace(`${process.env.BASE_URL}/`, "");
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            });
         }
 
         // build photo URL
-        const photoUrl = `${process.env.BASE_URL}/uploads/photos/${req.file.filename}`;
+        const photoUrls = req.files.map(file => `${process.env.BASE_URL}/uploads/photos/${file.filename}`);
 
         // update user with new photo URL
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { photo: photoUrl },
+            { photo: photoUrls },
             { new: true }
         );
 
         res.status(200).json({
-            message: "Photo uploaded successfully",
-            photo: photoUrl,
+            message: `${req.files.length}Photo uploaded successfully`,
+            photos: photoUrls,
             user: updatedUser
         });
 
@@ -202,20 +204,22 @@ export const deletePhoto = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!userExist.photo) {
-            return res.status(404).json({ message: "No photo found for this user" });
+        if (!userExist.photo || userExist.photo.length === 0) {
+            return res.status(404).json({ message: "No files found for this user" });
         }
 
-        // delete file from storage
-        const filePath = userExist.photo.replace(`${process.env.BASE_URL}/`, "");
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        // delete each file from storage
+        userExist.photo.forEach(photoUrl => {
+            const filePath = photoUrl.replace(`${process.env.BASE_URL}/`, "");
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        });
 
-        // clear photo field in DB
-        await User.findByIdAndUpdate(id, { photo: null });
+        // clear photo array in DB
+        await User.findByIdAndUpdate(id, { photo: [] });
 
-        res.status(200).json({ message: "Photo deleted successfully" });
+        res.status(200).json({ message: "Files deleted successfully" });
 
     } catch (error) {
         res.status(500).json({ errorMessage: error.message });
