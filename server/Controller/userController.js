@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 import User from "../model/userModel.js"
 import { v2 as cloudinary } from "cloudinary";
 
+const getResourceType = (url) => {
+    const imageTypes = /\.(jpg|jpeg|png|svg)$/i;
+    
+    if (imageTypes.test(url)) return "image";
+    return "raw";//for pdf, doc, txt
+};
 
 export const create = async(req, res) => {
     try {
@@ -168,7 +174,8 @@ export const uploadPhoto = async (req, res) => {
         if (userExist.photo && userExist.photo.length > 0) {
             for (const photoUrl of userExist.photo) {
                 const publicId = photoUrl.split("/").slice(-2).join("/").split(".")[0];
-                await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
+                const resourceType = getResourceType(photoUrl); // ✅ detect type
+                await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
             }
         }
 
@@ -210,7 +217,8 @@ export const deletePhoto = async (req, res) => {
         // delete each file from cloudinary
         for (const photoUrl of userExist.photo) {
             const publicId = photoUrl.split("/").slice(-2).join("/").split(".")[0];
-            await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
+            const resourceType = getResourceType(photoUrl); // ✅ detect type
+            await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
         }
 
         // clear photo array in DB
