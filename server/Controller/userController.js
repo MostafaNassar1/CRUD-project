@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import User from "../model/userModel.js"
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+
 
 export const create = async(req, res) => {
     try {
@@ -163,18 +164,16 @@ export const uploadPhoto = async (req, res) => {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        // delete old photo if exists
-        if (userExist.photo && Array.isArray(userExist.photo)) {
-            userExist.photo.forEach(photoUrl => {
-                const oldPath = photoUrl.replace(`${process.env.BASE_URL}/`, "");
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
-            });
+        // delete old photos from cloudinary if exist
+        if (userExist.photo && userExist.photo.length > 0) {
+            for (const photoUrl of userExist.photo) {
+                const publicId = photoUrl.split("/").slice(-2).join("/").split(".")[0];
+                await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
+            }
         }
 
-        // build photo URL
-        const photoUrls = req.files.map(file => `${process.env.BASE_URL}/uploads/photos/${file.filename}`);
+       // get cloudinary URLs from req.files
+        const photoUrls = req.files.map(file => file.path);
 
         // update user with new photo URL
         const updatedUser = await User.findByIdAndUpdate(
@@ -184,7 +183,7 @@ export const uploadPhoto = async (req, res) => {
         );
 
         res.status(200).json({
-            message: `${req.files.length}Photo uploaded successfully`,
+            message: `${req.files.length} Photo uploaded successfully`,
             photos: photoUrls,
             user: updatedUser
         });
@@ -208,13 +207,11 @@ export const deletePhoto = async (req, res) => {
             return res.status(404).json({ message: "No files found for this user" });
         }
 
-        // delete each file from storage
-        userExist.photo.forEach(photoUrl => {
-            const filePath = photoUrl.replace(`${process.env.BASE_URL}/`, "");
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        });
+        // delete each file from cloudinary
+        for (const photoUrl of userExist.photo) {
+            const publicId = photoUrl.split("/").slice(-2).join("/").split(".")[0];
+            await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
+        }
 
         // clear photo array in DB
         await User.findByIdAndUpdate(id, { photo: [] });
