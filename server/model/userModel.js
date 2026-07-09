@@ -13,9 +13,14 @@ const userSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    password: {
+        type: String, 
+        required: true
+    },
     photo:{
         type: [String],
-        default: [] }
+        default: []
+     }  
 })
 
 export default mongoose.model("Users", userSchema)

@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import bodyParser from 'body-parser'
 import dotenv from "dotenv"
 import route from './routes/userRoute.js'
+import authRoute from './routes/authRoute.js'
 
 const app = express();
 app.use(bodyParser.json());
@@ -25,3 +26,4 @@ mongoose
         .catch((error) => console.log(error));
 
         app.use("/api", route);
+        app.use("/api/auth", authRoute);
