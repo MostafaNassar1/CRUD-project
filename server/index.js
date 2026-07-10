@@ -4,9 +4,11 @@ import bodyParser from 'body-parser'
 import dotenv from "dotenv"
 import route from './routes/userRoute.js'
 import authRoute from './routes/authRoute.js'
+import cookieParser from 'cookie-parser'
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cookieParser());
 dotenv.config();
 
 //serve static files with cache control

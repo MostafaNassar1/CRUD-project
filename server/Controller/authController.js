@@ -51,12 +51,28 @@ export const login= async (req, res) => {
             {
                 id: userExist._id, email: userExist.email
             }, process.env.JWT_SECRET,
-            {expiresIn: "7d" }
+            {expiresIn: "15m" }
         );
+
+        res.cookie("token", token, {
+            httpOnly: true, //JS cannot access it
+            secure: true, //only sent over HTTPS
+            sameSite: "strict", //only sent to same site
+            maxAge: 15 * 60 * 1000 //15 minutes in milliseconds
+        })
 
         res.status(200).json({message: "Login succesful", token})
 
     } catch (error) {
         res.status(500).json({ errorMessage: error.message });
     }
+};
+
+export const logout = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict"
+    });
+    res.status(200).json({message: "Logged out successfully"});
 }
