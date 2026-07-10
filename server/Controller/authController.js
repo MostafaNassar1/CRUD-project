@@ -46,20 +46,26 @@ export const login= async (req, res) => {
             return res.status(401).json({message: "Invalid credentials"});
         }
 
-        //Create JWT token
+        //Create refresh token
         const token = jwt.sign(
-            {
-                id: userExist._id, email: userExist.email
-            }, process.env.JWT_SECRET,
-            {expiresIn: "15m" }
+            { id: userExist._id, },
+            process.env.JWT_REFRESH_SECRET,
+            {expiresIn: "7d" }
         );
 
-        res.cookie("token", token, {
+        res.cookie("accessToken", accessToken, {
             httpOnly: true, //JS cannot access it
             secure: true, //only sent over HTTPS
             sameSite: "strict", //only sent to same site
             maxAge: 15 * 60 * 1000 //15 minutes in milliseconds
-        })
+        });
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 *60 * 1000
+        });
 
         res.status(200).json({message: "Login succesful", token})
 
@@ -68,11 +74,53 @@ export const login= async (req, res) => {
     }
 };
 
+export const refresh = async(req, res) => {
+    try {
+        
+        //read refresh token from cookie
+        const refreshToken = req.cookies.refreshToken;
+
+        if(!refreshToken){
+            return res.status(401).json({message: "No refresh token provided"});
+        }
+
+        //verify refresh token
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+        //Create new access token
+        const newAccessToken = jwt.sign(
+            {id: decoded.id},
+            process.env.JWT_ACCESS_SECRET,
+            {expiresIn: "15m"}
+        );
+
+        //send new access token as cookie
+        res.cookie("accessToken", newAccessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.status(200).json({message: "Access token refreshed successfully"});
+    } catch (error) {
+        res.status(401).json({message: "Invalid or expired refresh token"});
+    }
+};
+
+//logout
 export const logout = (req, res) => {
-    res.clearCookie("token", {
+
+    res.clearCookie("accessToken", {
         httpOnly: true,
         secure: true,
         sameSite: "strict"
     });
+
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict"
+    })
     res.status(200).json({message: "Logged out successfully"});
 }
