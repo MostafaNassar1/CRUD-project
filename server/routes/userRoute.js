@@ -1,7 +1,7 @@
 import express from "express"
 import upload from "../MiddleWare/upload.js";
 import authMiddleware from "../MiddleWare/authMiddleware.js"; 
-import roleMiddleware from "../Controller/roleMiddleware.js";
+import roleMiddleware from "../MiddleWare/roleMiddleware.js";
 
 import { create, deleteUser, getAllUsers, getUserById, update, searchUsers, filterUsers, uploadPhoto, deletePhoto } from "../Controller/userController.js"
 
