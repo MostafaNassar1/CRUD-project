@@ -46,16 +46,16 @@ export const login= async (req, res) => {
             return res.status(401).json({message: "Invalid credentials"});
         }
 
-        //create access token
+        //create access token - add role
         const accessToken = jwt.sign(
-            {id:userExist._id, email: userExist.email},
+            {id:userExist._id, email: userExist.email, role: userExist.role},
             process.env.JWT_ACCESS_SECRET,
             {expiresIn:"15m"}
         );
 
-        //Create refresh token
+        //Create refresh token - add role
         const refreshToken = jwt.sign(
-            { id: userExist._id, },
+            { id: userExist._id, role: userExist.role },
             process.env.JWT_REFRESH_SECRET,
             {expiresIn: "7d" }
         );
