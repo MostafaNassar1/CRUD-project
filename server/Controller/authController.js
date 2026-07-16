@@ -1,4 +1,4 @@
-import User from "../model/userModel.js";
+import prisma from "../prisma/client.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -8,7 +8,7 @@ export const register = async (req, res) => {
         const {name, email, address, password, role} = req.body;
 
         //check if user already exists
-        const userExist = await User.findOne({email});
+        const userExist = await prisma.user.findUnique({where: {email}});
         if(userExist){
             return res.status(400).json({message: "User already exists"});
         }
@@ -17,15 +17,16 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         //create new user
-        const newUser = new User({
+        const savedUser = await prisma.user.create({
+           data:{
             name, 
             email, 
             address, 
             password: hashedPassword,
             role
+           }
         });
 
-        const savedUser = await newUser.save();
         res.status(201).json({message: "User registered successfully", user: savedUser});
     } catch (error) {
         res.status(500).json({ errorMessage: error.message });
@@ -37,7 +38,7 @@ export const login= async (req, res) => {
         const { email, password } = req.body;
 
         //check if user exists
-        const userExist = await User.findOne({email});
+        const userExist = await prisma.user.findUnique({where: {email}});
         if(!userExist){
             return res.status(404).json({message: "User not found"});
         }

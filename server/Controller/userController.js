@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-import User from "../model/userModel.js"
+import prisma from "../prisma/client.js"
 import { v2 as cloudinary } from "cloudinary";
 
 const getResourceType = (url) => {
@@ -11,14 +10,16 @@ const getResourceType = (url) => {
 
 export const create = async(req, res) => {
     try {
-        const newUser = new User(req.body);
-        const {email} = newUser;
+        const { name, email, address, password } = req.body;
 
-        const userExist = await User.findOne({email})
+        const userExist = await prisma.user.findUnique({where: {email}});
         if(userExist){
             return res.status(400).json({message: "User already exists."});
         }
-        const savedData = await newUser.save();
+
+        const savedData = await prisma.user.create({
+            data: {name, email, address, password}
+        });
         res.status(200).json(savedData);
     } catch (error) {
         res.status(500).json({errorMessge:error.message})
@@ -28,7 +29,7 @@ export const create = async(req, res) => {
 
 export const getAllUsers = async(req, res) => {
     try {
-        const userData = await User.find();
+        const userData = await prisma.user.findMany();
         if (!userData || userData.length === 0) {
             return res.status(404).json({message: "User Data not found"});
         }
@@ -41,8 +42,8 @@ export const getAllUsers = async(req, res) => {
 
 export const getUserById = async(req,res) =>{
     try {
-        const id = req.params.id;
-        const userExist = await User.findById(id);
+        const { id }= req.params;
+        const userExist = await prisma.user.findUnique({where:{id}});
         if (!userExist) {
              return res.status(404).json({message: "User not found"});
         }
@@ -55,14 +56,12 @@ export const getUserById = async(req,res) =>{
 
 export const update = async(req, res) => {
     try {
-        const id = req.params.id;
-        const userExist = await User.findById(id);
+        const {id} = req.params;
+        const userExist = await prisma.user.findUnique({where: {id}});
         if (!userExist) {
              return res.status(404).json({message: "User not found"});
         }
-        const updatedData = await User.findByIdAndUpdate(id, req.body, {
-            new:true
-        })
+        const updatedData = await prisma.user.update({ where:{id},data: req.body })
         res.status(200).json(updatedData)
     } catch (error) {
        res.status(500).json({errorMessge:error.message}) 
@@ -72,17 +71,17 @@ export const update = async(req, res) => {
 
 export const deleteUser = async (req,res) =>{
     try {
-        const id = req.params.id;
-        const userExist = await User.findById(id);
+        const { id } = req.params;
+        const userExist = await prisma.user.findUnique({where: {id}});
         if (!userExist) {
              return res.status(404).json({message: "User not found"});
         }
-        await User.findByIdAndDelete(id);
+        await prisma.user.delete({where:{id}});
         res.status(200).json({message: "User deleted successfully"});
     } catch (error) {
         res.status(500).json({errorMessge:error.message}) 
     }
-}
+};
 
 
 export const searchUsers = async(req, res) => {
@@ -92,23 +91,17 @@ export const searchUsers = async(req, res) => {
         if(!q) {
             return res.status(400).json({message: "Search query is required"})
         }
-        
-        //try searching by ID first
-        if(mongoose.Types.ObjectId.isValid(q)){
-            const userById = await User.findById(q);
-            if(userById){
-                return res.status(200).json(userById);
-            }
-        }
 
-        //search across name, email, address using regex (case-insensitive)
-        const users = await User.find({
-            $or: [
-                {name: {$regex: q, $options: "i"}},
-                {email: {$regex: q, $options: "i"}},
-                {address: {$regex: q, $options: "i"}},
+        //search across name, email, address 
+        const users = await prisma.user.findMany({
+            where:{
+            OR: [
+                {name: {contains: q, mode: "insensitive"}},
+                {email: {contains: q, mode: "insensitive"}},
+                {address: {contains: q, mode: "insensitive"}},
             ]
-        });
+        }
+    });
         if(users.length === 0){
             return res.status(404).json({message: "No user found"});
         }
@@ -123,28 +116,27 @@ export const filterUsers = async(req, res) => {
     try {
         const {name, email, address, sort} = req.query;
 
-        const query = {};
+        const where = {};
 
-        if(name){
-            query.name = {$regex: name, $options: "i"};
-        }
-        if(email){
-            query.email = {$regex: email, $options: "i"};
-        }
-        if(address){
-            query.address = {$regex: address, $options: "i"};
-        }
-
-        let sortOption = {};
+        if(name)
+            where.name = {contains: name, mode: "insensitive"};
+        
+        if(email)
+            where.email = {contains: email, mode: "insensitive"};
+        
+        if(address)
+            where.address = {contains: address, mode: "insensitive"};
+        
+        const orderBy = {};
         if(sort){
             if(sort.startsWith("-")){
-                sortOption[sort.slice(1)] = -1;
+                orderBy[sort.slice(1)] = "desc";
             }else {
-                sortOption[sort] = 1;
+                orderBy[sort] = "asc";
             }
         }
 
-        const users = await User.find(query).sort(sortOption);
+        const users = await prisma.user.findMany({where, orderBy});
 
         if(users.length === 0){
             return res.status(404).json({message: "No users found"});
@@ -161,7 +153,7 @@ export const uploadPhoto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const userExist = await User.findById(id);
+        const userExist = await prisma.user.findUnique({where: {id}});
         if (!userExist) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -183,11 +175,10 @@ export const uploadPhoto = async (req, res) => {
         const photoUrls = req.files.map(file => file.path);
 
         // update user with new photo URL
-        const updatedUser = await User.findByIdAndUpdate(
-            id,
-            { photo: photoUrls },
-            { new: true }
-        );
+        const updatedUser = await prisma.user.update({
+            where: {id},
+            data: { photo: photoUrls}
+    });
 
         res.status(200).json({
             message: `${req.files.length} Photo uploaded successfully`,
@@ -205,7 +196,7 @@ export const deletePhoto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const userExist = await User.findById(id);
+        const userExist = await prisma.user.findUnique({where: {id}});
         if (!userExist) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -222,7 +213,7 @@ export const deletePhoto = async (req, res) => {
         }
 
         // clear photo array in DB
-        await User.findByIdAndUpdate(id, { photo: [] });
+        await prisma.user.update({where:{id},data: { photo: [] }});
 
         res.status(200).json({ message: "Files deleted successfully" });
 

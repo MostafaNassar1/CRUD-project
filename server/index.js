@@ -1,31 +1,26 @@
 import express from 'express'
-import mongoose from 'mongoose'
 import bodyParser from 'body-parser'
 import dotenv from "dotenv"
 import route from './routes/userRoute.js'
 import authRoute from './routes/authRoute.js'
 import cookieParser from 'cookie-parser'
 
+dotenv.config();
+
 const app = express();
 app.use(bodyParser.json());
 app.use(cookieParser());
-dotenv.config();
 
-//serve static files with cache control
+
+//serve static files 
 app.use("/uploads", express.static("uploads"));
 
+app.use("/api", route);
+app.use("/api/auth", authRoute);
+
 const PORT = process.env.PORT || 7000;
-const MONGOURL = process.env.MONGO_URL;
 
-mongoose
-        .connect(MONGOURL)
-        .then(()=>{
-            console.log("DB connected successfully.")
-            app.listen(PORT, ()=>{
-                console.log(`Server is running on port: ${PORT}`); 
-            });
-        })
-        .catch((error) => console.log(error));
+app.listen(PORT, ()=>{
+     console.log(`Server is running on port: ${PORT}`); 
+    });
 
-        app.use("/api", route);
-        app.use("/api/auth", authRoute);
