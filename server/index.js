@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import route from './routes/userRoute.js'
 import authRoute from './routes/authRoute.js'
 import cookieParser from 'cookie-parser'
+import "./crons/userCron.js" 
 
 dotenv.config();
 
