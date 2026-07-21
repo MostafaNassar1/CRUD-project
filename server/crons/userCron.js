@@ -130,11 +130,6 @@ cron.schedule("0 0 * * *", async() => {
                 usersWithPhotos: userWithPhotos
             };
 
-await sendEmail(
-    process.env.ADMIN_EMAIL,
-    `📊 Daily Report — ${new Date().toLocaleDateString()}`,
-    dailyReportEmail(reportData)
-);
             // ✅ send report as email to admin
             await sendEmail(
                 process.env.ADMIN_EMAIL,

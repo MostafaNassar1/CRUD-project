@@ -19,12 +19,13 @@ export const create = async(req, res) => {
             return res.status(400).json({message: "User already exists."});
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10)
         const savedData = await prisma.user.create({
-            data: {name, email, address, password}
+            data: {name, email, address, password: hashedPassword}
         });
         res.status(200).json(savedData);
     } catch (error) {
-        res.status(500).json({errorMessge:error.message})
+        res.status(500).json({errorMessage:error.message})
     }
 };
 
