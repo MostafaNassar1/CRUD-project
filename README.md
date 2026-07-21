@@ -10,6 +10,9 @@ https://github.com/MostafaNassar1/CRUD-project
 ## Live Deployment
 https://crud-project-1-303j.onrender.com
 
+## API Documentation
+https://crud-project-1-303j.onrender.com/api-docs
+
 ---
 
 ## Tech Stack
@@ -26,32 +29,80 @@ https://crud-project-1-303j.onrender.com
 - Morgan
 - node-cron
 - dotenv
+- Nodemailer
+- Swagger
 
 ---
+
+## Features
+
+### 🔐 Authentication & Authorization
+- JWT authentication with HTTP-only cookies
+- Refresh token rotation
+- Role-Based Access Control (Admin/User)
+- Secure logout (clears cookies)
+
+### 👥 User Management
+- Create, read, update, delete users
+- Get user by ID
+- Filter users by name, email, address
+- Search across all fields
+- Pagination-ready queries
+
+### 📁 File Upload
+- Upload multiple files (images, PDFs, documents)
+- Cloudinary integration for permanent storage
+- Auto-delete old files (30 days)
+- Supported formats: JPG, PNG, JPEG, PDF, DOC, DOCX, TXT
+- Max file size: 5MB
+
+### ✉️ Email Notifications
+- Welcome email on registration
+- Account deletion notification
+- Daily report with user statistics
+
+### ⏰ Cron Jobs
+- **Weekly cleanup:** Deletes photos older than 30 days from Cloudinary (every Sunday at midnight)
+- **Daily report:** Sends user statistics via email (every day at midnight)
+
+### 📚 API Documentation
+- Interactive Swagger UI
+- Complete request/response examples
+- Authentication testing via cookies
+
+---
+
 
 ## Project Structure
 
 ```
 server/
 ├── Controller/
-│   ├── userController.js
-│   └── authController.js
+│ ├── userController.js 
+│ └── authController.js 
 ├── MiddleWare/
-│   ├── authMiddleware.js
-│   ├── roleMiddleware.js
-│   ├── upload.js
-│   └── validator.js
+│ ├── authMiddleware.js 
+│ ├── roleMiddleware.js 
+│ ├── upload.js 
+│ └── validator.js 
 ├── routes/
-│   ├── userRoute.js
-│   └── authRoute.js
+│ ├── userRoute.js 
+│ └── authRoute.js 
 ├── prisma/
-│   ├── schema.prisma
-│   ├── client.js
-│   └── migrations/
+│ ├── schema.prisma 
+│ ├── client.js 
+│ └── migrations/ 
 ├── crons/
-│   └── userCron.js
+│ └── userCron.js 
+├── utils/
+│ ├── emailTemplate.js 
+│ └── sendEmail.js 
 ├── .env
-└── index.js
+├── index.js 
+├── swagger.js 
+└── package.json
+
+
 ```
 
 ---
@@ -62,8 +113,13 @@ server/
 - Node.js installed
 - PostgreSQL database (Aiven)
 - Cloudinary account
+- Gmail account (for email notifications)
 
 ### Installation
+
+# Clone the repository
+git clone https://github.com/MostafaNassar1/CRUD-project.git
+cd CRUD-project/server
 
 ```bash
 npm install
@@ -81,6 +137,9 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 BASE_URL=http://localhost:8000
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+ADMIN_EMAIL=admin@example.com
 ```
 
 ### Running the App
@@ -142,6 +201,8 @@ This project uses **JWT Authentication** with **HTTP Only Cookies**.
 2. Login: `POST /api/auth/login`
 3. Cookies are set automatically
 4. Access protected routes — cookies are sent automatically
+5. Refresh → Use /api/auth/refresh to get new access token
+6. Logout → Clears both cookies
 
 ---
 
@@ -208,6 +269,26 @@ POST /api/user/:id/photo → Body: form-data, key: photos, type: File
 
 ---
 
+Email Templates
+1. Welcome Email
+Sent automatically after successful registration.
+
+2. Account Deletion Email
+Sent when an admin deletes a user account.
+
+3. Daily Report Email
+Sent every day at midnight with:
+
+Total users count
+
+Total admins
+
+Regular users count
+
+New users today
+
+Users with uploaded photos
+
 ## Cron Jobs
 
 This project uses **node-cron** for scheduled tasks:
@@ -215,7 +296,7 @@ This project uses **node-cron** for scheduled tasks:
 | Cron Job | Schedule | Description |
 |---|---|---|
 | Auto delete old photos | Every Sunday at midnight | Deletes photos older than 30 days from Cloudinary and clears DB |
-| Daily report | Every day at midnight | Logs total users, admins, new users today, and users with photos |
+| Daily report | Every day at midnight | Generates and emails user statistics to admin |
 
 ---
 
@@ -236,4 +317,11 @@ This project uses **node-cron** for scheduled tasks:
 ```
 
 ---
+Swagger Documentation
+Access the interactive API documentation:
 
+Development: http://localhost:8000/api-docs
+
+Production: https://crud-project-1-303j.onrender.com/api-docs
+
+---
