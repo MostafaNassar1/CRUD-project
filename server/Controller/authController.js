@@ -1,6 +1,8 @@
 import prisma from "../prisma/client.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import sendEmail from "../utils/sendEmail.js";
+import { welcomeEmail } from "../utils/emailTemplate.js";
 
 //register
 export const register = async (req, res) => {
@@ -26,6 +28,12 @@ export const register = async (req, res) => {
             role
            }
         });
+
+        await sendEmail(
+            email,
+            "Welcome to CRUD App! 🎉",
+            welcomeEmail(name)
+        );
 
         res.status(201).json({message: "User registered successfully", user: savedUser});
     } catch (error) {

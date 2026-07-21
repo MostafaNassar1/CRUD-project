@@ -1,6 +1,8 @@
 import cron from "node-cron";
 import { v2 as cloudinary } from "cloudinary";
 import prisma from "../prisma/client.js";
+import sendEmail from "../utils/sendEmail.js";
+import { dailyReportEmail } from "../utils/emailTemplate.js";
 
 //CRON 1: Auto delete old photos from cloudinary
 //runs every Sunday at midnight
@@ -120,6 +122,28 @@ cron.schedule("0 0 * * *", async() => {
             console.log("✅ Report Generated Successfully");
             console.log("========================================\n");
         
+            const reportData = {
+                totalUsers,
+                totalAdmins,
+                totalRegularUsers,
+                newUsersToday,
+                usersWithPhotos: userWithPhotos
+            };
+
+await sendEmail(
+    process.env.ADMIN_EMAIL,
+    `📊 Daily Report — ${new Date().toLocaleDateString()}`,
+    dailyReportEmail(reportData)
+);
+            // ✅ send report as email to admin
+            await sendEmail(
+                process.env.ADMIN_EMAIL,
+                `📊 Daily Report — ${new Date().toLocaleDateString()}`,
+                dailyReportEmail(reportData)
+            );
+
+            console.log("✅ Daily report email sent successfully");
+
     } catch (error) {
         console.error("❌ Daily report error:", error.message);
     }

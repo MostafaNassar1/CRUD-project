@@ -1,5 +1,7 @@
 import prisma from "../prisma/client.js"
 import { v2 as cloudinary } from "cloudinary";
+import sendEmail from "../utils/sendEmail.js";
+import { accountDeletedEmail } from "../utils/emailTemplate.js";
 
 const getResourceType = (url) => {
     const imageTypes = /\.(jpg|jpeg|png|svg)$/i;
@@ -76,6 +78,13 @@ export const deleteUser = async (req,res) =>{
         if (!userExist) {
              return res.status(404).json({message: "User not found"});
         }
+
+        await sendEmail(
+            userExist.email,
+            "Your Account Has Been Deleted",
+            accountDeletedEmail(userExist.name)
+        );
+
         await prisma.user.delete({where:{id}});
         res.status(200).json({message: "User deleted successfully"});
     } catch (error) {
