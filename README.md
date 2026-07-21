@@ -1,22 +1,30 @@
 # CRUD Application — Backend
 
-A backend REST API built with **Express.js** and **MongoDB**. Uses **Mongoose** as an ORM to manage a User collection, exposing RESTful API endpoints for creating, reading, updating, and deleting users, along with smart search, filter, file upload, and JWT authentication.
+A backend REST API built with **Express.js** and **PostgreSQL**. Uses **Prisma** as an ORM to manage a User collection, exposing RESTful API endpoints for creating, reading, updating, and deleting users, along with smart search, filter, file upload, JWT authentication, RBAC, and scheduled cron jobs.
+
+---
+
+## GitHub Repository
+https://github.com/MostafaNassar1/CRUD-project
 
 ## Live Deployment
 https://crud-project-1-303j.onrender.com
 
+---
 
 ## Tech Stack
 
 - Node.js
 - Express.js
-- MongoDB
-- Mongoose (ORM)
+- PostgreSQL (Aiven)
+- Prisma (ORM)
 - bcrypt
 - jsonwebtoken
 - Multer
 - Cloudinary
 - cookie-parser
+- Morgan
+- node-cron
 - dotenv
 
 ---
@@ -28,15 +36,20 @@ server/
 ├── Controller/
 │   ├── userController.js
 │   └── authController.js
-├── middleware/
+├── MiddleWare/
 │   ├── authMiddleware.js
+│   ├── roleMiddleware.js
 │   ├── upload.js
 │   └── validator.js
-├── model/
-│   └── userModel.js
 ├── routes/
 │   ├── userRoute.js
 │   └── authRoute.js
+├── prisma/
+│   ├── schema.prisma
+│   ├── client.js
+│   └── migrations/
+├── crons/
+│   └── userCron.js
 ├── .env
 └── index.js
 ```
@@ -47,13 +60,42 @@ server/
 
 ### Prerequisites
 - Node.js installed
-- MongoDB Atlas account
+- PostgreSQL database (Aiven)
 - Cloudinary account
 
+### Installation
+
+```bash
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root folder:
+```
+PORT=8000
+DATABASE_URL="postgres://avnadmin:password@your-aiven-host:port/defaultdb?sslmode=require"
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+BASE_URL=http://localhost:8000
+```
 
 ### Running the App
 
+```bash
 node index.js
+```
+
+### Database Migration
+
+```bash
+npx prisma migrate dev --name init
+```
+
+---
 
 ## API Endpoints
 
@@ -70,9 +112,9 @@ node index.js
 |---|---|---|---|
 | GET | `/api/users` | Get all users | ❌ |
 | GET | `/api/user/:id` | Get user by ID | ✅ |
-| POST | `/api/user` | Create user | ✅ |
-| PUT | `/api/user/:id` | Update user | ✅ |
-| DELETE | `/api/user/:id` | Delete user | ✅ |
+| POST | `/api/user` | Create user | ✅ Admin only |
+| PUT | `/api/update/user/:id` | Update user | ✅ Admin only |
+| DELETE | `/api/delete/user/:id` | Delete user | ✅ Admin only |
 
 ### Search & Filter
 | Method | Endpoint | Description | Auth Required |
@@ -83,8 +125,8 @@ node index.js
 ### Files
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/api/user/:id/photo` | Upload files | ✅ |
-| DELETE | `/api/user/:id/photo` | Delete files | ✅ |
+| POST | `/api/user/:id/photo` | Upload files | ✅ Admin only |
+| DELETE | `/api/user/:id/photo` | Delete files | ✅ Admin only |
 
 ---
 
@@ -103,16 +145,39 @@ This project uses **JWT Authentication** with **HTTP Only Cookies**.
 
 ---
 
+## RBAC (Role Based Access Control)
+
+This project implements RBAC with two roles:
+
+| Role | Permissions |
+|---|---|
+| `admin` | Full access — create, read, update, delete, upload files |
+| `user` | Read only — get all users, get user by ID |
+
+### How to register as admin:
+```json
+{
+  "name": "Mostafa",
+  "email": "mostafa@gmail.com",
+  "address": "Beirut",
+  "password": "123456",
+  "role": "admin"
+}
+```
+
+---
+
 ## Search Endpoint
 
 Search across name, email, and address using a single query:
 
 ```
-GET /api/search?q=Mos
+GET /api/search?q=Mostafa
 GET /api/search?q=@gmail.com
 GET /api/search?q=Beirut
-GET /api/search?q=6a4934e4dce8e2a85435d56f
 ```
+
+---
 
 ## Filter Endpoint
 
@@ -143,16 +208,32 @@ POST /api/user/:id/photo → Body: form-data, key: photos, type: File
 
 ---
 
+## Cron Jobs
+
+This project uses **node-cron** for scheduled tasks:
+
+| Cron Job | Schedule | Description |
+|---|---|---|
+| Auto delete old photos | Every Sunday at midnight | Deletes photos older than 30 days from Cloudinary and clears DB |
+| Daily report | Every day at midnight | Logs total users, admins, new users today, and users with photos |
+
+---
+
 ## User Model
 
 ```json
 {
+  "id": "uuid",
   "name": "Mostafa",
   "email": "mostafa@gmail.com",
   "address": "Beirut, Lebanon",
   "password": "hashed_password",
-  "photo": []
+  "role": "admin",
+  "photo": [],
+  "createdAt": "2026-07-16T00:00:00.000Z",
+  "updatedAt": "2026-07-16T00:00:00.000Z"
 }
 ```
 
 ---
+
