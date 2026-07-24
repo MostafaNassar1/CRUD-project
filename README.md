@@ -384,23 +384,23 @@ A React.js frontend built with **Vite** and styled with **Tailwind CSS**, design
 ## Project Structure
 client/
 ├── src/
-│ ├── api/
-│ │ ├── axios.js
-│ │ └── mockApi.js
-│ ├── components/
-│ │ ├── Navbar.jsx
-│ │ └── ProtectedRoute.jsx
-│ ├── context/
-│ │ └── AuthContext.jsx
-│ ├── pages/
-│ │ ├── Home.jsx
-│ │ ├── Login.jsx
-│ │ ├── Register.jsx
-│ │ ├── Dashboard.jsx
-│ │ └── AdminPanel.jsx
-│ ├── App.jsx
-│ ├── main.jsx
-│ └── index.css
+│   ├── api/
+│   │   ├── axios.js
+│   │   └── mockApi.js
+│   ├── components/
+│   │   ├── Navbar.jsx
+│   │   └── ProtectedRoute.jsx
+│   ├── context/
+│   │   └── AuthContext.jsx
+│   ├── pages/
+│   │   ├── Home.jsx
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
+│   │   ├── Dashboard.jsx
+│   │   └── AdminPanel.jsx
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
 ├── .env
 ├── vite.config.js
 └── package.json
