@@ -382,6 +382,9 @@ A React.js frontend built with **Vite** and styled with **Tailwind CSS**, design
 ---
 
 ## Project Structure
+
+```
+
 client/
 ├── src/
 │   ├── api/
@@ -405,6 +408,7 @@ client/
 ├── vite.config.js
 └── package.json
 
+```
 ---
 
 ## Getting Started
