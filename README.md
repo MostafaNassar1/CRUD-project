@@ -325,3 +325,115 @@ Development: http://localhost:8000/api-docs
 Production: https://crud-project-1-303j.onrender.com/api-docs
 
 ---
+
+---
+
+
+# CRUD Project — Frontend
+
+A React.js frontend built with **Vite** and styled with **Tailwind CSS**, designed to consume the backend REST API above. Implements authentication flow, role-based access control, and protected routing on the client side.
+
+---
+
+## Tech Stack
+
+- React.js
+- Vite
+- Tailwind CSS
+- React Router DOM
+- Axios
+- axios-mock-adapter (development only)
+
+---
+
+## Features
+
+### 🔐 Authentication
+- Login and Registration pages with controlled forms
+- Client-side validation on all inputs
+- Error handling and display for failed requests
+
+### 🧭 Routing & Navigation
+- Client-side routing with React Router
+- Public Home page with app overview
+- Protected Routes — restrict access to Admin Panel and Dashboard based on login status
+- Role-based access — only admins can access the Admin Panel
+
+### 🌍 Global State Management
+- React Context API (`AuthContext`) for managing logged-in user state across the app
+- Centralized `login()` / `logout()` logic accessible from any component
+
+### 🖥️ Pages
+- **Home** — public landing page with app overview and login/register entry points
+- **Login** — authenticates user, redirects to Admin Panel or Dashboard based on role
+- **Register** — creates a new user account, redirects to Login on success
+- **Dashboard** — displays the logged-in user's profile information
+- **Admin Panel** — displays a table of all users with edit/delete actions (Admin only)
+
+### 🧩 Components
+- **Navbar** — dynamic navigation bar showing the logged-in user's name, avatar, and role, with role-based links and logout functionality
+- **ProtectedRoute** — wrapper component that guards routes based on authentication and role
+
+### 🔌 API Integration
+- Centralized Axios instance (`api/axios.js`) configured with `withCredentials` for cookie-based authentication
+- Environment-based API URL configuration using Vite's `import.meta.env`
+- Mock API layer (`api/mockApi.js`) using `axios-mock-adapter` to simulate backend responses during frontend-only development, allowing full UI/auth flow testing before backend integration
+
+---
+
+## Project Structure
+client/
+├── src/
+│ ├── api/
+│ │ ├── axios.js
+│ │ └── mockApi.js
+│ ├── components/
+│ │ ├── Navbar.jsx
+│ │ └── ProtectedRoute.jsx
+│ ├── context/
+│ │ └── AuthContext.jsx
+│ ├── pages/
+│ │ ├── Home.jsx
+│ │ ├── Login.jsx
+│ │ ├── Register.jsx
+│ │ ├── Dashboard.jsx
+│ │ └── AdminPanel.jsx
+│ ├── App.jsx
+│ ├── main.jsx
+│ └── index.css
+├── .env
+├── vite.config.js
+└── package.json
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js installed
+
+### Installation
+
+```bash
+cd CRUD-project/client
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file inside `client/`:
+VITE_API_URL=http://localhost:8000/api
+
+### Running the App
+
+```bash
+npm run dev
+```
+
+The app will run at `http://localhost:5173`.
+
+---
+
+## Current Status
+
+The frontend is currently built and tested against a **mock API** (`axios-mock-adapter`), simulating login, registration, and role-based redirect behavior without requiring the live backend to be running. Full integration with the deployed backend (CORS configuration and cookie `sameSite` adjustments) is planned for a future stage.
