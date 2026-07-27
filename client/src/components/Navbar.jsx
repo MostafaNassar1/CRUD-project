@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/authContext'
+import { toast } from 'react-toastify'
 
 function Navbar() {
   const navigate = useNavigate()
@@ -7,6 +8,7 @@ function Navbar() {
 
   const handleLogout = () => {
     logout()
+    toast.info('Logged out successfully')
     navigate('/login')
     // TODO (later, when backend is connected):
     // Also call POST /api/auth/logout to clear the real cookies

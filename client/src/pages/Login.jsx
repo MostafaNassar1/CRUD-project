@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import { useAuth } from '../context/authContext'
+import { toast } from 'react-toastify'
 
 function Login() {
 
@@ -32,6 +33,7 @@ function Login() {
       const { role } = response.data.user
 
       login(response.data.user)
+      toast.success(`Welcome back, ${response.data.user.name}!`)
 
       if (role === 'admin'){
         navigate('/admin')

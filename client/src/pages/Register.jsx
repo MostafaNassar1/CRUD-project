@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
+import { toast } from 'react-toastify'
 
 function Register() {
   const navigate = useNavigate()
@@ -27,6 +28,7 @@ function Register() {
 
     try {
       await api.post('/auth/register', formData)
+      toast.success('Account created! Please log in.')
       navigate('/login')
     } catch (error) {
       setError(error.response?.data?.message || 'Something went wrong')

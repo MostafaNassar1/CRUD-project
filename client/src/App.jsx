@@ -5,9 +5,12 @@ import AdminPanel from './pages/AdminPanel'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
+import { ToastContainer, toast } from 'react-toastify'
 
 function App() {
   return (
+    <>
+    <ToastContainer position='top-right' autoClose={3000} theme="light" />
     <Routes>
       <Route path="/" element={<Home/>} />
       <Route path="/register" element={<Register />} />
@@ -17,6 +20,7 @@ function App() {
                                     </ProtectedRoute> }/>
       <Route path='/dashboard' element={<ProtectedRoute><Dashboard/></ProtectedRoute>}/>
     </Routes>
+    </>
   )
 }
 
