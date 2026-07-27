@@ -8,6 +8,9 @@ function AdminPanel(){
     const [showAddModal, setShowAddModal] = useState(false)
     const [newUser, setNewUser] = useState({name: '', email: '', address: '', password: '', role: 'user'})
     const [addError, setAddError] = useState('')
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [editUser, setEditUser] = useState({ id: '', name: '', email: '', address: '', role: 'user'})
+    const [editError, setEditError] = useState('')
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -34,10 +37,32 @@ function AdminPanel(){
         }
     }
 
-    const handleEdit = (id) => {
-        console.log('Edit User:', id);
-        //Todo
+    const handleEdit = (user) => {
+    setEditUser({ id: user.id, name: user.name, email: user.email, address: user.address, role: user.role })
+    setEditError('')
+    setShowEditModal(true)
     }
+
+    const handleEditUserChange = (e) => {
+    setEditUser({
+        ...editUser,
+        [e.target.name]: e.target.value
+     })
+    }
+
+    const handleUpdateUser = async (e) => {
+    e.preventDefault()
+    setEditError('')
+
+    try {
+        const response = await api.put(`/update/user/${editUser.id}`, editUser)
+        setUsers(users.map((u) => (u.id === editUser.id ? response.data.user : u)))
+        setShowEditModal(false)
+        toast.success('User updated successfully')
+    } catch (error) {
+        setEditError(error.response?.data?.message || 'Something went wrong')
+    }
+}
 
     const handleNewUserChange = (e) => {
         setNewUser({
@@ -94,7 +119,7 @@ function AdminPanel(){
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin'?'bg-purple-100 text-purple-700':'bg-green-100 text-green-700'}`}>{user.role}</span>
                                     </td>
                                     <td className="px-6 py-4 flex gap-2">
-                                        <button onClick={() => handleEdit(user.id)} className="text-blue-600 hover:underline text-sm">Edit</button>
+                                        <button onClick={() => handleEdit(user)} className="text-blue-600 hover:underline text-sm">Edit</button>
                                         <button onClick={() => handleDelete(user.id)} className="text-blue-600 hover:underline text-sm">Delete</button>
                                     </td>
                                 </tr>
@@ -151,6 +176,49 @@ function AdminPanel(){
                     </div>
                 )
             }
+            {
+    showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Edit User</h2>
+
+                {editError && (
+                    <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg mb-4">{editError}</div>
+                )}
+
+                <form onSubmit={handleUpdateUser}>
+                    <div className="mb-3">
+                        <label className="block text-sm font-medium mb-1 text-gray-700">Name</label>
+                        <input type="text" name="name" value={editUser.name} onChange={handleEditUserChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="block text-sm font-medium mb-1 text-gray-700">Email</label>
+                        <input type="email" name="email" value={editUser.email} onChange={handleEditUserChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="block text-sm font-medium mb-1 text-gray-700">Address</label>
+                        <input type="text" name="address" value={editUser.address} onChange={handleEditUserChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    </div>
+
+                    <div className="mb-5">
+                        <label className="block text-sm font-medium mb-1 text-gray-700">Role</label>
+                        <select name="role" value={editUser.role} onChange={handleEditUserChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                        <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
         </div>
     )
 }

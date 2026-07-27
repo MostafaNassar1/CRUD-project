@@ -87,4 +87,22 @@ mock.onDelete(/\/delete\/user\/.+/).reply((config) => {
     return [200, {message: 'User deleted successfully' }]
 })
 
+mock.onPut(/\/update\/user\/.+/).reply((config) => {
+    const id = config.url.split('/').pop()
+    const {name, email, address, role} = JSON.parse(config.data)
+
+    const index = fakeUsers.findIndex((u) => u.id === id)
+    if(index === -1){
+        return [404, {message: 'User not found'}]
+    }
+
+    fakeUsers[index] = {
+        ...fakeUsers[index], name, email, address, role
+    }
+    saveUsers()
+
+    const { password: _, ...safeUser } = fakeUsers[index]
+    return [200, {message: 'User updated successfully', user: safeUser }]
+})
+
 export default mock
