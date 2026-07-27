@@ -5,9 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { AuthProvider } from './context/authContext.jsx'
 
-if(import.meta.env.DEV){
-  await import('./api/mockApi.js')
-}
+await import('./api/mockApi.js')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
