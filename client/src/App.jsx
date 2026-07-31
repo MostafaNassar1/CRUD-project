@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import { ToastContainer, toast } from 'react-toastify'
+import Analyticsdashboard from './pages/AnalyticsDashboard'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
                                     <AdminPanel/>
                                     </ProtectedRoute> }/>
       <Route path='/dashboard' element={<ProtectedRoute><Dashboard/></ProtectedRoute>}/>
+      <Route path="/analytics" element={<ProtectedRoute allowedRole="admin"><Analyticsdashboard/></ProtectedRoute>}/>
     </Routes>
     </>
   )
