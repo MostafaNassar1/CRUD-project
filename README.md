@@ -473,10 +473,10 @@ The app will run at `http://localhost:5173`.
 Deployed on **Vercel**, with a `vercel.json` rewrite rule to support client-side routing on refresh.
 
 URL: crud-project-mkgtdix3u-mostafanassar1s-projects.vercel.app
-
 Login Page to enter as Admin:
 email: mostafa@gmail.com
 password: 123456
+
 ---
 
 
