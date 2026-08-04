@@ -331,7 +331,7 @@ Production: https://crud-project-1-303j.onrender.com/api-docs
 
 # CRUD Project — Frontend
 
-A React.js frontend built with **Vite** and styled with **Tailwind CSS**, designed to consume the backend REST API above. Implements authentication flow, role-based access control, and protected routing on the client side.
+A React.js frontend built with **Vite** and styled with **Tailwind CSS**, designed to consume the backend REST API above. Implements authentication flow, role-based access control, protected routing, data caching, and an admin analytics dashboard on the client side.
 
 ---
 
@@ -339,9 +339,13 @@ A React.js frontend built with **Vite** and styled with **Tailwind CSS**, design
 
 - React.js
 - Vite
-- Tailwind CSS
+- Tailwind CSS (with class-based dark mode)
 - React Router DOM
 - Axios
+- @tanstack/react-query (data fetching, caching, mutations)
+- Recharts (data visualization)
+- React Toastify (notifications)
+- Font Awesome (icons)
 - axios-mock-adapter (development only)
 
 ---
@@ -352,32 +356,55 @@ A React.js frontend built with **Vite** and styled with **Tailwind CSS**, design
 - Login and Registration pages with controlled forms
 - Client-side validation on all inputs
 - Error handling and display for failed requests
+- Login session persistence across page refreshes (`localStorage`)
+- Toast notifications on login, register, and logout
 
 ### 🧭 Routing & Navigation
 - Client-side routing with React Router
 - Public Home page with app overview
-- Protected Routes — restrict access to Admin Panel and Dashboard based on login status
-- Role-based access — only admins can access the Admin Panel
+- Protected Routes — restrict access to Admin Panel, Dashboard, and Analytics based on login status
+- Role-based access — only admins can access the Admin Panel and Analytics Dashboard
 
 ### 🌍 Global State Management
-- React Context API (`AuthContext`) for managing logged-in user state across the app
-- Centralized `login()` / `logout()` logic accessible from any component
+- React Context API (`AuthContext`) for managing logged-in user state across the app, with `localStorage` persistence and live sync on profile updates
+- React Context API (`ThemeContext`) for global light/dark mode, persisted across sessions
+- `@tanstack/react-query` for server-state management — caching, background refetching, and mutations with automatic cache invalidation
+
+### 🎨 Dark Mode
+- App-wide light/dark theme toggle (Tailwind v4 class-based strategy)
+- Persisted user preference via `localStorage`
+- Applied consistently across all pages and components
 
 ### 🖥️ Pages
-- **Home** — public landing page with app overview and login/register entry points
+- **Home** — public landing page with app overview, login/register entry points, and theme toggle
 - **Login** — authenticates user, redirects to Admin Panel or Dashboard based on role
 - **Register** — creates a new user account, redirects to Login on success
-- **Dashboard** — displays the logged-in user's profile information
-- **Admin Panel** — displays a table of all users with edit/delete actions (Admin only)
+- **Dashboard** — displays and allows editing of the logged-in user's profile, including photo upload/removal
+- **Admin Panel** — full user management: paginated table, search, sort, add/edit/delete users, with URL-synced state
+- **Analytics Dashboard** *(admin only)* — overview stat cards, pie chart of user roles (Recharts), manual refresh, and CSV export
 
 ### 🧩 Components
-- **Navbar** — dynamic navigation bar showing the logged-in user's name, avatar, and role, with role-based links and logout functionality
+- **Navbar** — dynamic navigation bar showing the logged-in user's name, avatar/photo, and role, with role-based links, theme toggle, and logout functionality
 - **ProtectedRoute** — wrapper component that guards routes based on authentication and role
+
+### 📋 Admin Panel Capabilities
+- Paginated user table (URL-synced page state)
+- Search by name, email, or address
+- Sort by name/email (ascending or descending)
+- Add, edit, and delete users via modal forms
+- Icon-based actions (Font Awesome)
+- Toast feedback on all actions
+
+### 📊 Analytics Dashboard
+- Real-time stat cards (Total Users, Total Admins, Total Regular Users)
+- Interactive pie chart visualizing Admin vs User role breakdown
+- Manual data refresh using React Query's `refetch`
+- CSV export of the current user list
 
 ### 🔌 API Integration
 - Centralized Axios instance (`api/axios.js`) configured with `withCredentials` for cookie-based authentication
 - Environment-based API URL configuration using Vite's `import.meta.env`
-- Mock API layer (`api/mockApi.js`) using `axios-mock-adapter` to simulate backend responses during frontend-only development, allowing full UI/auth flow testing before backend integration
+- Mock API layer (`api/mockApi.js`) using `axios-mock-adapter` to simulate backend responses during frontend-only development, with `localStorage`-backed persistence, allowing full UI/auth/CRUD flow testing before backend integration
 
 ---
 
@@ -387,24 +414,27 @@ A React.js frontend built with **Vite** and styled with **Tailwind CSS**, design
 
 client/
 ├── src/
-│   ├── api/
-│   │   ├── axios.js
-│   │   └── mockApi.js
-│   ├── components/
-│   │   ├── Navbar.jsx
-│   │   └── ProtectedRoute.jsx
-│   ├── context/
-│   │   └── AuthContext.jsx
-│   ├── pages/
-│   │   ├── Home.jsx
-│   │   ├── Login.jsx
-│   │   ├── Register.jsx
-│   │   ├── Dashboard.jsx
-│   │   └── AdminPanel.jsx
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
+│ ├── api/
+│ │ ├── axios.js
+│ │ └── mockApi.js
+│ ├── components/
+│ │ ├── Navbar.jsx
+│ │ └── ProtectedRoute.jsx
+│ ├── context/
+│ │ ├── authContext.jsx
+│ │ └── ThemeContext.jsx
+│ ├── pages/
+│ │ ├── Home.jsx
+│ │ ├── Login.jsx
+│ │ ├── Register.jsx
+│ │ ├── Dashboard.jsx
+│ │ ├── AdminPanel.jsx
+│ │ └── AnalyticsDashboard.jsx
+│ ├── App.jsx
+│ ├── main.jsx
+│ └── index.css
 ├── .env
+├── vercel.json
 ├── vite.config.js
 └── package.json
 
@@ -438,6 +468,15 @@ The app will run at `http://localhost:5173`.
 
 ---
 
-## Current Status
+## Deployment
 
-The frontend is currently built and tested against a **mock API** (`axios-mock-adapter`), simulating login, registration, and role-based redirect behavior without requiring the live backend to be running. Full integration with the deployed backend (CORS configuration and cookie `sameSite` adjustments) is planned for a future stage.
+Deployed on **Vercel**, with a `vercel.json` rewrite rule to support client-side routing on refresh.
+
+URL: crud-project-mkgtdix3u-mostafanassar1s-projects.vercel.app
+Login Page to enter as Admin:
+email: mostafa@gmail.com
+password: 123456
+
+---
+
+
