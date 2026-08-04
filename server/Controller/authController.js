@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import { welcomeEmail } from "../utils/emailTemplate.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 //register
 export const register = async (req, res) => {
     try {
@@ -65,21 +67,21 @@ export const login= async (req, res) => {
 
         //Create refresh token - add role
         const refreshToken = jwt.sign(
-            { id: userExist.id, role: decoded.role },
+            { id: userExist.id, role: userExist.role },
             process.env.JWT_REFRESH_SECRET,
             {expiresIn: "7d" }
         );
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true, //JS cannot access it
-            secure: true, //only sent over HTTPS
+            secure: isProduction, //only sent over HTTPS
             sameSite: "strict", //only sent to same site
             maxAge: 15 * 60 * 1000 //15 minutes in milliseconds
         });
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: isProduction,
             sameSite: "strict",
             maxAge: 7 * 24 * 60 *60 * 1000
         });
@@ -121,7 +123,7 @@ export const refresh = async(req, res) => {
         //send new access token as cookie
         res.cookie("accessToken", newAccessToken, {
             httpOnly: true,
-            secure: true,
+            secure: isProduction,
             sameSite: "strict",
             maxAge: 15 * 60 * 1000
         });
@@ -137,13 +139,13 @@ export const logout = (req, res) => {
 
     res.clearCookie("accessToken", {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         sameSite: "strict"
     });
 
     res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         sameSite: "strict"
     })
     res.status(200).json({message: "Logged out successfully"});

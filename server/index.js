@@ -7,12 +7,18 @@ import cookieParser from 'cookie-parser'
 import swaggerUi from "swagger-ui-express"
 import swaggerSpec from './swagger.js'
 import "./crons/userCron.js"
+import cors from 'cors'
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}))
 
 //swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from '../components/Navbar'
 import api from "../api/axios";
 import { toast } from "react-toastify";
@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "../context/NotificationContext";
 
 function AdminPanel(){
     const [showAddModal, setShowAddModal] = useState(false)
@@ -14,9 +15,18 @@ function AdminPanel(){
     const [showEditModal, setShowEditModal] = useState(false)
     const [editUser, setEditUser] = useState({ id: '', name: '', email: '', address: '', role: 'user'})
     const [editError, setEditError] = useState('')
+    const [selectedIds, setSelectedIds] = useState([])
+    const [visibleColumns, setVisibleColumns] = useState({
+        name: true, 
+        email: true,
+        address: true,
+        role: true
+    })
+    const [showColumnMenu, setShowColumnMenu] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const searchQuery = searchParams.get('q') || ''
     const sortBy = searchParams.get('sort') || ''
+    
 
     const currentPage = parseInt(searchParams.get('page')) || 1
 
@@ -41,13 +51,22 @@ function AdminPanel(){
 const users = data?.users || []
 const totalPages = data?.totalPages || 1
 
+useEffect(() => {
+    if(currentPage > totalPages && totalPages > 0){
+        setSearchParams({ page: String(totalPages) })
+    }
+}, [currentPage, totalPages])
+
     const queryClient = useQueryClient()
+
+    const { addNotification } = useNotifications()
 
     const addUserMutation = useMutation({
         mutationFn: (userData) => api.post('/user', userData),
-        onSuccess: () => {
+        onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ['users'] })
             toast.success('User created successfully')
+            addNotification(`${response.data.user.name} was added`)
         },
         onError: (error) => {
             setAddError(error.response?.data?.message || 'Something went wrong')
@@ -56,9 +75,10 @@ const totalPages = data?.totalPages || 1
 
     const updateUserMutation = useMutation({
         mutationFn: ({ id, userData }) => api.put(`/update/user/${id}`, userData),
-        onSuccess: () => {
+        onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ['users'] })
             toast.success('User updated successfully')
+            addNotification(`${response.data.user.name} was updated`)
         },
         onError: (error) => {
             setEditError(error.response?.data?.message || 'Something went wrong')
@@ -67,14 +87,48 @@ const totalPages = data?.totalPages || 1
 
     const deleteUserMutation = useMutation({
         mutationFn: (id) => api.delete(`/delete/user/${id}`),
-        onSuccess: () => {
+        onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['users'] })
             toast.success('User deleted successfully')
+            const deletedUser = users.find((u) => u.id === id)
+            addNotification(`${deletedUser?.name || 'A user'} was deleted`)
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || 'Failed to delete user')
         }
     })
+
+    const bulkDeleteMutation = useMutation({
+        mutationFn: (ids) => Promise.all(ids.map((id) => api.delete(`/delete/user/${id}`))),
+        onSuccess: (_, ids) => {
+            queryClient.invalidateQueries({ queryKey: ['users'] })
+            toast.success('Selected users deleted successfully')
+            addNotification(`${ids.length} user(s) were deleted`)
+            setSelectedIds([])
+        },
+        onError: () => {
+            toast.error('Failed to delete some users')
+        }
+    })
+
+    const toggleColumn = (column) => {
+        setVisibleColumns((prev) => ({
+            ...prev, 
+            [column] : !prev[column]
+        }))
+    }
+
+    const toggleSelectUser = (id) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((selectedId) => selectedId != id) : [...prev, id])
+    }
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === users.length){
+            setSelectedIds([])
+        }else {
+            setSelectedIds(users.map((u) => u.id))
+        }
+    }
 
     const handleDelete = (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this user?')
@@ -138,6 +192,14 @@ const totalPages = data?.totalPages || 1
         })
     }
 
+    const handleBulkDelete = () => {
+        const confirmed = window.confirm(`Delete ${selectedIds.length} selected user(s)?`)
+        if(!confirmed)
+            return
+
+        bulkDeleteMutation.mutate(selectedIds)
+    }
+
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
             <Navbar />
@@ -158,29 +220,58 @@ const totalPages = data?.totalPages || 1
                         <option value="email">Email (A-Z)</option>
                         <option value="-email">Email (Z-A)</option>
                     </select>
+
+                    <div className="relative">
+                        <button onClick={() => setShowColumnMenu(!showColumnMenu)} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition whitespace-nowrap">Columns ▾</button>
+                        {
+                            showColumnMenu && (
+                                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg z-10 p-2">
+                                    {Object.keys(visibleColumns).map((column) =>(
+                                        <label key={column} className="flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-700 rounded cursor-pointer capitalize">
+                                            <input type="checkbox" checked={visibleColumns[column]} onChange={() => toggleColumn(column)} className="rounded" />{column}
+                                        </label>
+                                    ))}
+                                </div>
+                            )
+                        }
+                    </div>
+
                     <button onClick={() => setShowAddModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-b-lg hover:bg-blue-700 transition whitespace-nowrap">+ Add User</button>
                 </div>
+
+                {selectedIds.length > 0 && (
+                    <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 mb-4">
+                        <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">{selectedIds.length} user(s) selected</p>
+                        <button onClick={handleBulkDelete} className="bg-red-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">Delete selected</button>
+                    </div>
+                )}
 
                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Name</th>
-                                <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Email</th>
-                                <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Address</th>
-                                <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Role</th>
+                                <th className="px-6 py-3 w-10">
+                                    <input type="checkbox" checked={users.length > 0 && selectedIds.length === users.length} onChange={toggleSelectAll} className="rounded" />
+                                </th>
+                                {visibleColumns.name && <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Name</th>}
+                                {visibleColumns.email && <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Email</th>}
+                                {visibleColumns.address && <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Address</th>}
+                                {visibleColumns.role && <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Role</th>}
                                 <th className="px-6 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((user) => (
                                 <tr key={user.id} className="border-b border-gray-200 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.name}</td>
-                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.email}</td>
-                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.address}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin'?'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300':'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>{user.role}</span>
+                                        <input type="checkbox" checked={selectedIds.includes(user.id)} onChange={() => toggleSelectUser(user.id)} className="rounded" />
                                     </td>
+                                    {visibleColumns.name && <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.name}</td>}
+                                    {visibleColumns.email && <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.email}</td>}
+                                    {visibleColumns.address && <td className="px-6 py-4 text-gray-800 dark:text-gray-100">{user.address}</td>}
+                                    {visibleColumns.role && <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin'?'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300':'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>{user.role}</span>
+                                    </td>}
                                     <td className="px-6 py-4">
                                         <div className="flex gap-2">
                                             <button onClick={() => handleEdit(user)} className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition" title="Edit user">

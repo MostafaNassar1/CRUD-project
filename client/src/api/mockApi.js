@@ -26,7 +26,7 @@ mock.onPost('/auth/login').reply((config) => {
     return [200,{ message: 'Login successful', user: {id: user.id, name: user.name, email:user.email, role: user.role,},},]
 })
 
-mock.onPost('auth/register').reply((config) => {
+mock.onPost('/auth/register').reply((config) => {
     const { name, email, address, password } = JSON.parse(config.data)
 
     const exists = fakeUsers.find((u) => u.email === email)
@@ -35,7 +35,7 @@ mock.onPost('auth/register').reply((config) => {
     }
 
     const newUser = {
-        id: crypto.randomUUID(), name, email, address, password, role: 'User',}
+        id: crypto.randomUUID(), name, email, address, password, role: 'user',}
         fakeUsers.push(newUser)
         saveUsers()
 
