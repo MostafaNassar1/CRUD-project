@@ -39,6 +39,7 @@ export const register = async (req, res) => {
 
         res.status(201).json({message: "User registered successfully", user: savedUser});
     } catch (error) {
+        console.error("REGISTER ERROR:", error)
         res.status(500).json({ errorMessage: error.message });
     }
 };
@@ -115,7 +116,7 @@ export const refresh = async(req, res) => {
 
         //Create new access token
         const newAccessToken = jwt.sign(
-            {id: decoded.id},
+            {id: decoded.id, role: decoded.role},
             process.env.JWT_ACCESS_SECRET,
             {expiresIn: "15m"}
         );

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import { toast } from 'react-toastify'
 
+
 function Register() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ function Register() {
     password: ''
   })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
 
   const handleChange = (e) => {
     setFormData({
@@ -23,6 +26,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
       await api.post('/auth/register', formData)
@@ -30,6 +34,8 @@ function Register() {
       navigate('/login')
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong')
+    }finally{
+      setLoading(false)
     }
   }
 
@@ -99,10 +105,8 @@ function Register() {
           </div>
 
           <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Register
+            type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition">
+            {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 

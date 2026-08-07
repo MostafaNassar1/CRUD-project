@@ -10,7 +10,7 @@ import { NotificationProvider } from './context/NotificationContext.jsx'
 
 const queryClient = new QueryClient()
 
-await import('./api/mockApi.js')
+//await import('./api/mockApi.js')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

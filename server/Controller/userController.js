@@ -2,6 +2,7 @@ import prisma from "../prisma/client.js"
 import { v2 as cloudinary } from "cloudinary";
 import sendEmail from "../utils/sendEmail.js";
 import { accountDeletedEmail } from "../utils/emailTemplate.js";
+import bcrypt from "bcrypt";
 
 const getResourceType = (url) => {
     const imageTypes = /\.(jpg|jpeg|png|svg)$/i;
@@ -12,7 +13,7 @@ const getResourceType = (url) => {
 
 export const create = async(req, res) => {
     try {
-        const { name, email, address, password } = req.body;
+        const { name, email, address, password, role } = req.body;
 
         const userExist = await prisma.user.findUnique({where: {email}});
         if(userExist){
@@ -21,10 +22,14 @@ export const create = async(req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10)
         const savedData = await prisma.user.create({
-            data: {name, email, address, password: hashedPassword}
+            data: {name, email, address, password: hashedPassword, role}, 
+            select: {
+                id: true, name: true, email: true, address: true, role: true, photo: true, createdAt: true, updatedAt: true
+            }
         });
-        res.status(200).json(savedData);
+        res.status(200).json({message: "User created successfully",user: savedData});
     } catch (error) {
+        console.log("Create User Error:", error);
         res.status(500).json({errorMessage:error.message})
     }
 };
@@ -32,11 +37,30 @@ export const create = async(req, res) => {
 
 export const getAllUsers = async(req, res) => {
     try {
-        const userData = await prisma.user.findMany();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+
+        const totalUsers = await prisma.user.count();
+        const userData = await prisma.user.findMany({
+            skip,
+            take: limit,
+            select: {
+                id: true, name: true, email: true, address: true,
+                role: true, photo: true, createdAt: true, updatedAt: true
+            }
+        });
+
         if (!userData || userData.length === 0) {
             return res.status(404).json({message: "User Data not found"});
         }
-        res.status(200).json(userData);
+
+        res.status(200).json({
+            users: userData,
+            totalUsers,
+            totalPages: Math.ceil(totalUsers / limit),
+            currentPage: page
+        });
     } catch (error) {
         res.status(500).json({errorMessge:error.message})
     }
@@ -64,8 +88,12 @@ export const update = async(req, res) => {
         if (!userExist) {
              return res.status(404).json({message: "User not found"});
         }
-        const updatedData = await prisma.user.update({ where:{id},data: req.body })
-        res.status(200).json(updatedData)
+        const updatedData = await prisma.user.update({ where:{id},data: req.body,
+        select: {
+            id: true, name: true, email: true, address: true, role: true, photo: true, createdAt: true, updatedAt: true
+        } 
+    })
+       res.status(200).json({ message: "User updated successfully", user: updatedData })
     } catch (error) {
        res.status(500).json({errorMessge:error.message}) 
     }

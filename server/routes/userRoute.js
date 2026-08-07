@@ -3,6 +3,7 @@ import upload from "../MiddleWare/upload.js";
 import authMiddleware from "../MiddleWare/authMiddleware.js"; 
 import roleMiddleware from "../MiddleWare/roleMiddleware.js";
 import { create, deleteUser, getAllUsers, getUserById, update, searchUsers, filterUsers, uploadPhoto, deletePhoto } from "../Controller/userController.js"
+import selfOrAdminMiddleware from "../MiddleWare/selfOrAdminMiddleware.js";
 
 const route = express.Router();
 
@@ -264,7 +265,7 @@ route.get("/search", searchUsers);
  *       500:
  *         description: Server error
  */
-route.post("/user/:id/photo", authMiddleware, roleMiddleware(["admin"]), upload.array("photos", 5), uploadPhoto);
+route.post("/user/:id/photo", authMiddleware, selfOrAdminMiddleware, upload.array("photos", 5), uploadPhoto);
 
 /**
  * @swagger
@@ -291,7 +292,7 @@ route.post("/user/:id/photo", authMiddleware, roleMiddleware(["admin"]), upload.
  *       500:
  *         description: Server error
  */
-route.delete("/user/:id/photo", authMiddleware, roleMiddleware(["admin"]), deletePhoto);
+route.delete("/user/:id/photo", authMiddleware, selfOrAdminMiddleware, deletePhoto);
 
 /**
  * @swagger

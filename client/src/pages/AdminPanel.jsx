@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useNotifications } from "../context/NotificationContext";
 
 function AdminPanel(){
@@ -44,7 +44,8 @@ function AdminPanel(){
             response = await api.get(`/users?page=${currentPage}&limit=5`)
             return response.data
         }
-    }
+    },
+    placeholderData: keepPreviousData
 })
 
 

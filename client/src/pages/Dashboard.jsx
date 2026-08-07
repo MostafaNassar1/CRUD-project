@@ -71,20 +71,19 @@ function Dashboard() {
             return
         setUploading(true)
 
-        const reader = new FileReader()
-        reader.onloadend = async () => {
-            try {
-                const response = await api.post(`/user/${user.id}/photo`, {photo: reader.result})
-                setUser(response.data.user)
-                updateUser({ photo: response.data.user.photo })
-                toast.success('Photo uploaded successfully')
-            } catch (error) {
-                toast.error('Failed to upload photo')
-            }finally{
-                setUploading(false)
-            }
+        try {
+            const formData = new FormData()
+            formData.append('photos', file)
+            const response = await api.post(`/user/${user.id}/photo`, formData)
+            const photoUrl = response.data.user.photo[0]
+            setUser({...response.data.user, photo: photoUrl})
+            updateUser({photo: photoUrl})
+            toast.success('Photo uploaded successfully')
+        } catch (error) {
+            toast.error('Failed to upload photo')
+        }finally{
+            setUploading(false)
         }
-        reader.readAsDataURL(file)
     }
 
     const handlePhotoDelete = async () => {
